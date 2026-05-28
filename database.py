@@ -1,110 +1,201 @@
-import sqlite3
-from typing import Optional, Dict, Any
+# =========================================
+# FILE: database.py
+# PATH: /NovaGuideBot/database.py
+#
+# ОТВЕЧАЕТ ЗА:
+# - подключение к SQLite
+# - создание базы данных
+# - сохранение профиля пользователя
+# - получение данных пользователя
+# - обновление анкеты
+# =========================================
 
-# Имя файла базы данных по умолчанию
+import sqlite3
+from typing import Optional
+
+
+# =========================================
+# Название файла базы данных
+# =========================================
+
 DB_NAME = "users.db"
 
 
-def init_db(db_path: str = DB_NAME) -> None:
+# =========================================
+# Создание таблицы users
+#
+# Вызывается один раз при старте бота.
+# =========================================
+
+def init_db() -> None:
     """
-    Инициализирует базу данных SQLite и создает таблицу 'users'
-    с полями: telegram_id, name, language, style.
+    Создает таблицу users, если она еще не существует.
     """
-    conn = sqlite3.connect(db_path)
+
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             telegram_id INTEGER PRIMARY KEY,
-            name TEXT,
-            language TEXT,
-            style TEXT
+            name TEXT NOT NULL,
+            language TEXT NOT NULL,
+            style TEXT NOT NULL
         )
     """)
+
     conn.commit()
     conn.close()
 
 
-def get_user(telegram_id: int, db_path: str = DB_NAME) -> Optional[Dict[str, Any]]:
-    """
-    Получает данные профиля пользователя по его telegram_id.
-    Если пользователь отсутствует в БД, возвращает None.
-    """
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row  # Доступ по названиям столбцов
+# =========================================
+# Получение пользователя
+#
+# Возвращает:
+# - dict с данными пользователя
+# - либо None, если пользователя нет
+# =========================================
+
+def get_user(telegram_id: int) -> Optional[dict]:
+
+    conn = sqlite3.connect(DB_NAME)
+
+    # Позволяет обращаться к колонкам по имени
+    conn.row_factory = sqlite3.Row
+
     cursor = conn.cursor()
+
     cursor.execute(
-        "SELECT telegram_id, name, language, style FROM users WHERE telegram_id = ?",
+        """
+        SELECT * FROM users
+        WHERE telegram_id = ?
+        """,
         (telegram_id,)
     )
-    row = cursor.fetchone()
+
+    user = cursor.fetchone()
+
     conn.close()
-    
-    if row is None:
+
+    if user is None:
         return None
-        
-    return {
-        "telegram_id": row["telegram_id"],
-        "name": row["name"],
-        "language": row["language"],
-        "style": row["style"]
-    }
+
+    return dict(user)
 
 
-def save_user(telegram_id: int, name: str, language: str, style: str, db_path: str = DB_NAME) -> None:
-    """
-    Сохраняет нового пользователя или перезаписывает существующего целиком.
-    """
-    conn = sqlite3.connect(db_path)
+# =========================================
+# Сохранение пользователя
+#
+# Используем UPSERT:
+# - если пользователя нет → создаем
+# - если есть → обновляем
+# =========================================
+
+def save_user(
+    telegram_id: int,
+    name: str,
+    language: str,
+    style: str
+) -> None:
+
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
+
     cursor.execute("""
-        INSERT INTO users (telegram_id, name, language, style)
+        INSERT INTO users (
+            telegram_id,
+            name,
+            language,
+            style
+        )
         VALUES (?, ?, ?, ?)
-        ON CONFLICT(telegram_id) DO UPDATE SET
+
+        ON CONFLICT(telegram_id)
+        DO UPDATE SET
             name = excluded.name,
             language = excluded.language,
             style = excluded.style
-    """, (telegram_id, name, language, style))
+    """, (
+        telegram_id,
+        name,
+        language,
+        style
+    ))
+
     conn.commit()
     conn.close()
 
 
-def update_user_name(telegram_id: int, name: str, db_path: str = DB_NAME) -> None:
-    """
-    Обновляет исключительно имя пользователя.
-    """
-    conn = sqlite3.connect(db_path)
+# =========================================
+# Обновление имени
+# =========================================
+
+def update_name(
+    telegram_id: int,
+    new_name: str
+) -> None:
+
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET name = ? WHERE telegram_id = ?",
-        (name, telegram_id)
-    )
+
+    cursor.execute("""
+        UPDATE users
+        SET name = ?
+        WHERE telegram_id = ?
+    """, (
+        new_name,
+        telegram_id
+    ))
+
     conn.commit()
     conn.close()
 
 
-def update_user_language(telegram_id: int, language: str, db_path: str = DB_NAME) -> None:
-    """
-    Обновляет исключительно предпочтительный язык общения.
-    """
-    conn = sqlite3.connect(db_path)
+# =========================================
+# Обновление языка
+# =========================================
+
+def update_language(
+    telegram_id: int,
+    new_language: str
+) -> None:
+
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET language = ? WHERE telegram_id = ?",
-        (language, telegram_id)
-    )
+
+    cursor.execute("""
+        UPDATE users
+        SET language = ?
+        WHERE telegram_id = ?
+    """, (
+        new_language,
+        telegram_id
+    ))
+
     conn.commit()
     conn.close()
 
 
-def update_user_style(telegram_id: int, style: str, db_path: str = DB_NAME) -> None:
-    """
-    Обновляет исключительно предпочтительный стиль ведения диалога.
-    """
-    conn = sqlite3.connect(db_path)
+# =========================================
+# Обновление стиля общения
+# =========================================
+
+def update_style(
+    telegram_id: int,
+    new_style: str
+) -> None:
+
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET style = ? WHERE telegram_id = ?",
-        (style, telegram_id)
-    )
+
+    cursor.execute("""
+        UPDATE users
+        SET style = ?
+        WHERE telegram_id = ?
+    """, (
+        new_style,
+        telegram_id
+    ))
+
     conn.commit()
     conn.close()

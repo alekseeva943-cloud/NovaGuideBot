@@ -1,6 +1,0 @@
-{
-  "name": "AI Consultant Bot Workspace",
-  "description": "Workspace for AI Consultant Telegram Bot with SQLite database, OpenAI API retrieval, and user onboarding flow.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
