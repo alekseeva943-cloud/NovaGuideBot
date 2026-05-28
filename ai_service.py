@@ -97,34 +97,17 @@ def build_context(question: str, knowledge_text: str) -> str:
 def fix_typos_and_smart_answer(question: str, answer: str, user_name: str) -> str:
     """Исправляет типичные опечатки, НЕ перебивает ответы GPT"""
     
-    # Словарь типичных ошибок и опечаток (для кибербезопасности)
+    # Словарь типичных ошибок и опечаток
     typo_map = {
-        "хакер": "хакер",
-        "пентест": "пентест",
-        "кали": "Kali Linux",
-        "метасплоит": "Metasploit",
         "нмап": "Nmap",
+        "метасплоит": "Metasploit",
         "виршарк": "Wireshark",
-        "джон": "John the Ripper",
+        "джон риппер": "John the Ripper",
         "гидра": "Hydra",
-        "сикл": "SQL",
+        "сикл инъекция": "SQL-инъекция",
         "иксэсэс": "XSS",
         "сирф": "CSRF",
     }
-    
-    question_lower = question.lower()
-    
-    # Если вопрос общий и бот сказал "нет информации" - даём подсказку
-    if "нет информации" in answer.lower() or "извините" in answer.lower():
-        return f"""{user_name}, у меня есть информация по кибербезопасности!
-
-Попробуй спросить:
-- Что такое SQL-инъекция?
-- Как работает Nmap?
-- Чем отличается белый хакер от чёрного?
-- Что такое OWASP Top 10?
-
-Я обязательно найду ответ в базе знаний! 🔐"""
     
     # Исправляем опечатки в ответе
     for wrong, correct in typo_map.items():
