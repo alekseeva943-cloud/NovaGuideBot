@@ -29,7 +29,7 @@ from openai import AsyncOpenAI
 # КОНСТАНТЫ
 # =========================================
 
-MODEL_NAME = "gpt-4o-mini"
+MODEL_NAME = "gpt-6-luna"
 TEMPERATURE = 0.7
 MAX_PARAGRAPHS = 3
 KNOWLEDGE_FILE = "knowledge.txt"
@@ -148,12 +148,13 @@ async def generate_answer(question: str, user_name: str, user_language: str, use
     try:
         response = await client.chat.completions.create(
             model=MODEL_NAME,
+            reasoning_effort="none",
             messages=[
                 {"role": "system", "content": full_system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
             temperature=TEMPERATURE,
-            max_tokens=500
+            max_completion_tokens=500
         )
         
         answer = response.choices[0].message.content
@@ -168,7 +169,8 @@ async def generate_answer(question: str, user_name: str, user_language: str, use
 
 async def translate_ui_text(text: str, language: str) -> str:
     response = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-6-luna",
+        reasoning_effort="none",
         messages=[
             {"role": "system", "content": f"Translate to {language}. Preserve emojis. Keep formatting. Return ONLY translation."},
             {"role": "user", "content": text}
